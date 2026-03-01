@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)
         console.error('[Opportunities] 오류:', errorMessage)
-        send({ type: 'error', error: `키워드 발굴 분석 중 오류가 발생했습니다: ${errorMessage}` })
+        send({ type: 'error', error: '키워드 발굴 분석 중 오류가 발생했습니다.' })
       } finally {
         controller.close()
       }

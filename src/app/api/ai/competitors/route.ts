@@ -836,7 +836,7 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[Competitors] 오류:', errorMessage)
     return NextResponse.json(
-      { error: `상위노출 분석 중 오류가 발생했습니다: ${errorMessage}` },
+      { error: '상위노출 분석 중 오류가 발생했습니다.' },
       { status: 500 }
     )
   }

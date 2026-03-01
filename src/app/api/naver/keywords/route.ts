@@ -362,7 +362,7 @@ export async function GET(request: NextRequest) {
           console.error('[Keywords API] 스트리밍 오류:', errorMessage)
           send({
             type: 'error',
-            error: `키워드 조회 중 오류가 발생했습니다: ${errorMessage}`,
+            error: '키워드 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
           })
         } finally {
           controller.close()
@@ -381,7 +381,7 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[Keywords API] 오류:', errorMessage)
     return NextResponse.json(
-      { error: `키워드 조회 중 오류가 발생했습니다: ${errorMessage}` },
+      { error: '키워드 조회 중 오류가 발생했습니다.' },
       { status: 500 }
     )
   }

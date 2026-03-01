@@ -1,4 +1,4 @@
-# NaverSEO Pro - 크롤링 정책
+# BlogIt - 크롤링 정책
 # 랜딩/공개 페이지만 검색엔진 노출 허용, 나머지 차단
 
 User-agent: *

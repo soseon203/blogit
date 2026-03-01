@@ -10,9 +10,7 @@
  * - Starter 이상: 모든 기능 사용 가능
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClient = any
-
+import { SupabaseClient } from '@supabase/supabase-js'
 import {
   CREDIT_COSTS,
   CREDIT_FEATURE_LABELS,
@@ -159,12 +157,14 @@ export async function deductCredits(
       })
       .single()
 
-    if (!error && data?.success) {
-      return { success: true, remaining: data.remaining }
+    const rpcResult = data as { success: boolean; remaining: number } | null
+
+    if (!error && rpcResult?.success) {
+      return { success: true, remaining: rpcResult.remaining }
     }
 
-    if (data && !data.success) {
-      return { success: false, remaining: data.remaining }
+    if (rpcResult && !rpcResult.success) {
+      return { success: false, remaining: rpcResult.remaining }
     }
   } catch {
     // RPC 미배포 시 폴백

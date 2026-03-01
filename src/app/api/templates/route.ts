@@ -44,7 +44,7 @@ export async function GET() {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[Templates GET] 오류:', errorMessage)
     return NextResponse.json(
-      { error: `템플릿 목록을 가져오는 중 오류가 발생했습니다: ${errorMessage}` },
+      { error: '템플릿 목록을 가져오는 중 오류가 발생했습니다.' },
       { status: 500 }
     )
   }
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[Templates POST] 오류:', errorMessage)
     return NextResponse.json(
-      { error: `템플릿을 저장하는 중 오류가 발생했습니다: ${errorMessage}` },
+      { error: '템플릿을 저장하는 중 오류가 발생했습니다.' },
       { status: 500 }
     )
   }
@@ -170,7 +170,7 @@ export async function DELETE(request: Request) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[Templates DELETE] 오류:', errorMessage)
     return NextResponse.json(
-      { error: `템플릿을 삭제하는 중 오류가 발생했습니다: ${errorMessage}` },
+      { error: '템플릿을 삭제하는 중 오류가 발생했습니다.' },
       { status: 500 }
     )
   }

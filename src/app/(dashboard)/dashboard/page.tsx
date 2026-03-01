@@ -16,6 +16,7 @@ import {
   Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import Link from 'next/link'
+import Image from 'next/image'
 import { PLANS, type Plan } from '@/types/database'
 import { timeAgo } from '@/lib/utils/date'
 import { ensureUrl } from '@/lib/utils/text'
@@ -371,10 +372,13 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-4">
                 {blogProfile.blogThumbnail && (
-                  <img
+                  <Image
                     src={blogProfile.blogThumbnail}
                     alt={blogProfile.blogName}
+                    width={64}
+                    height={64}
                     className="h-16 w-16 rounded-full object-cover"
+                    unoptimized
                   />
                 )}
                 <div className="space-y-2">

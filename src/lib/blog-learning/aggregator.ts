@@ -5,7 +5,34 @@
  * 키워드별 + 카테고리 전체 두 레벨로 집계
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ContentType, DomainCategory } from '@/lib/content/engine'
+
+/** analyzed_posts 테이블 레코드 타입 */
+interface AnalyzedPost {
+  keyword: string
+  keyword_category: string | null
+  domain_category: string | null
+  quality_score: number
+  char_count: number
+  image_count: number
+  heading_count: number
+  paragraph_count: number
+  internal_link_count: number
+  external_link_count: number
+  title_length: number
+  has_keyword_in_title: boolean
+  has_list_format: boolean
+  has_table: boolean
+  has_naver_map: boolean
+  has_youtube: boolean
+  writing_tone: string | null
+  tags: string[] | null
+  image_positions: string[] | null
+  image_types: string[] | null
+  collected_at: string
+  [key: string]: unknown
+}
 
 /**
  * 키워드별 + 카테고리 전체 집계 패턴 업데이트
@@ -39,8 +66,7 @@ export async function updateAggregatePatterns(
 }
 
 async function aggregateForKeyword(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   keyword: string,
   category: ContentType | null,
   domain: DomainCategory | null = null
@@ -56,7 +82,7 @@ async function aggregateForKeyword(
   const aggregated = calculateAggregates(posts)
 
   // 성공 패턴 (quality_score >= 9)
-  const successPosts = posts.filter((p: Record<string, unknown>) => (p.quality_score as number) >= 9)
+  const successPosts = posts.filter((p) => p.quality_score >= 9)
   const successPatterns = successPosts.length >= 2
     ? calculateSuccessPatterns(successPosts)
     : {}
@@ -65,9 +91,9 @@ async function aggregateForKeyword(
   const topTags = calculateTopTags(posts)
 
   // 최적 범위 (p25-p75)
-  const optimalCharRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.char_count as number))
-  const optimalImageRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.image_count as number))
-  const optimalHeadingRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.heading_count as number))
+  const optimalCharRange = calculatePercentileRange(posts.map((p) => p.char_count))
+  const optimalImageRange = calculatePercentileRange(posts.map((p) => p.image_count))
+  const optimalHeadingRange = calculatePercentileRange(posts.map((p) => p.heading_count))
 
   // 톤 분포
   const toneDistribution = calculateToneDistribution(posts)
@@ -104,8 +130,7 @@ async function aggregateForKeyword(
 }
 
 async function aggregateForCategory(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   category: ContentType
 ): Promise<void> {
   // 해당 카테고리의 모든 분석 포스트 조회 (최대 500개)
@@ -119,14 +144,14 @@ async function aggregateForCategory(
   if (error || !posts || posts.length < 3) return
 
   const aggregated = calculateAggregates(posts)
-  const successPosts = posts.filter((p: Record<string, unknown>) => (p.quality_score as number) >= 9)
+  const successPosts = posts.filter((p) => p.quality_score >= 9)
   const successPatterns = successPosts.length >= 2
     ? calculateSuccessPatterns(successPosts)
     : {}
   const topTags = calculateTopTags(posts)
-  const optimalCharRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.char_count as number))
-  const optimalImageRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.image_count as number))
-  const optimalHeadingRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.heading_count as number))
+  const optimalCharRange = calculatePercentileRange(posts.map((p) => p.char_count))
+  const optimalImageRange = calculatePercentileRange(posts.map((p) => p.image_count))
+  const optimalHeadingRange = calculatePercentileRange(posts.map((p) => p.heading_count))
   const toneDistribution = calculateToneDistribution(posts)
   const imagePositionRates = calculateImagePositionRates(posts)
   const topImageTypes = calculateTopImageTypes(posts)
@@ -159,8 +184,7 @@ async function aggregateForCategory(
 }
 
 async function aggregateForDomain(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   domain: DomainCategory
 ): Promise<void> {
   // 해당 도메인의 모든 분석 포스트 조회 (최대 500개)
@@ -174,14 +198,14 @@ async function aggregateForDomain(
   if (error || !posts || posts.length < 3) return
 
   const aggregated = calculateAggregates(posts)
-  const successPosts = posts.filter((p: Record<string, unknown>) => (p.quality_score as number) >= 9)
+  const successPosts = posts.filter((p) => p.quality_score >= 9)
   const successPatterns = successPosts.length >= 2
     ? calculateSuccessPatterns(successPosts)
     : {}
   const topTags = calculateTopTags(posts)
-  const optimalCharRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.char_count as number))
-  const optimalImageRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.image_count as number))
-  const optimalHeadingRange = calculatePercentileRange(posts.map((p: Record<string, unknown>) => p.heading_count as number))
+  const optimalCharRange = calculatePercentileRange(posts.map((p) => p.char_count))
+  const optimalImageRange = calculatePercentileRange(posts.map((p) => p.image_count))
+  const optimalHeadingRange = calculatePercentileRange(posts.map((p) => p.heading_count))
   const toneDistribution = calculateToneDistribution(posts)
   const imagePositionRates = calculateImagePositionRates(posts)
   const topImageTypes = calculateTopImageTypes(posts)
@@ -215,8 +239,7 @@ async function aggregateForDomain(
 
 // ===== 집계 헬퍼 =====
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function calculateAggregates(posts: any[]) {
+function calculateAggregates(posts: AnalyzedPost[]) {
   return {
     avg_char_count: avg(posts, 'char_count'),
     avg_image_count: avg(posts, 'image_count'),
@@ -228,7 +251,7 @@ function calculateAggregates(posts: any[]) {
   }
 }
 
-function calculateSuccessPatterns(posts: any[]): Record<string, number> {
+function calculateSuccessPatterns(posts: AnalyzedPost[]): Record<string, number> {
   return {
     avg_char_count: avg(posts, 'char_count'),
     avg_image_count: avg(posts, 'image_count'),
@@ -240,7 +263,7 @@ function calculateSuccessPatterns(posts: any[]): Record<string, number> {
   }
 }
 
-function calculateTopTags(posts: any[]): Array<{ tag: string; count: number }> {
+function calculateTopTags(posts: AnalyzedPost[]): Array<{ tag: string; count: number }> {
   const tagCounts = new Map<string, number>()
 
   for (const post of posts) {
@@ -257,7 +280,7 @@ function calculateTopTags(posts: any[]): Array<{ tag: string; count: number }> {
     .map(([tag, count]) => ({ tag, count }))
 }
 
-function calculateToneDistribution(posts: any[]): Record<string, number> {
+function calculateToneDistribution(posts: AnalyzedPost[]): Record<string, number> {
   const toneCounts: Record<string, number> = {}
   let totalWithTone = 0
 
@@ -290,10 +313,10 @@ function calculatePercentileRange(values: number[]): { min: number; max: number 
   }
 }
 
-function avg(posts: any[], field: string, isBoolean = false): number {
+function avg(posts: AnalyzedPost[], field: string, isBoolean = false): number {
   if (posts.length === 0) return 0
 
-  const sum = posts.reduce((acc: number, p: any) => {
+  const sum = posts.reduce((acc: number, p: AnalyzedPost) => {
     const val = p[field]
     if (isBoolean) return acc + (val ? 1 : 0)
     return acc + (typeof val === 'number' ? val : 0)
@@ -305,8 +328,8 @@ function avg(posts: any[], field: string, isBoolean = false): number {
  * 이미지 배치 위치 빈도 집계
  * 각 위치가 전체 포스트 중 몇 %에서 나타나는지
  */
-function calculateImagePositionRates(posts: any[]): Record<string, number> {
-  const postsWithImages = posts.filter((p: any) => {
+function calculateImagePositionRates(posts: AnalyzedPost[]): Record<string, number> {
+  const postsWithImages = posts.filter((p: AnalyzedPost) => {
     const positions = p.image_positions as string[] | null
     return positions && positions.length > 0
   })
@@ -330,8 +353,8 @@ function calculateImagePositionRates(posts: any[]): Record<string, number> {
 /**
  * 이미지 유형 빈도 Top5 집계
  */
-function calculateTopImageTypes(posts: any[]): Array<{ type: string; rate: number }> {
-  const postsWithTypes = posts.filter((p: any) => {
+function calculateTopImageTypes(posts: AnalyzedPost[]): Array<{ type: string; rate: number }> {
+  const postsWithTypes = posts.filter((p: AnalyzedPost) => {
     const types = p.image_types as string[] | null
     return types && types.length > 0
   })
@@ -353,5 +376,3 @@ function calculateTopImageTypes(posts: any[]): Array<{ type: string; rate: numbe
       rate: Math.round((count / postsWithTypes.length) * 100) / 100,
     }))
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any */

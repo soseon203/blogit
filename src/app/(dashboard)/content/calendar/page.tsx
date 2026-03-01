@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog'
 import Link from 'next/link'
 import { markdownToHtml, htmlForNaverClipboard } from '@/lib/utils/markdown-convert'
+import DOMPurify from 'dompurify'
 
 // 콘텐츠 아이템 (본문 보기용)
 interface ContentItem {
@@ -595,7 +596,7 @@ export default function ContentCalendarPage() {
             <div className="overflow-y-auto p-4" style={{ maxHeight: 'calc(80vh - 80px)' }}>
               <div
                 className="prose prose-sm max-w-none text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: markdownToHtml(viewingContent.content) }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(markdownToHtml(viewingContent.content)) }}
               />
             </div>
           </div>

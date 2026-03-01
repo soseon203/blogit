@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         const errorMessage = error instanceof Error ? error.message : String(error)
         console.error('[Autocomplete API] 오류:', errorMessage)
         return NextResponse.json(
-            { error: `자동완성 조회 중 오류가 발생했습니다: ${errorMessage}` },
+            { error: '자동완성 조회 중 오류가 발생했습니다.' },
             { status: 500 }
         )
     }

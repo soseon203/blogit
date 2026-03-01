@@ -13,16 +13,7 @@ export async function GET() {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
-    // 크레딧 체크 (잔액 확인만, GET이므로 차감하지 않음)
-    const creditCheck = await checkCredits(supabase, user.id, 'tracking_per_keyword')
-    if (!creditCheck.allowed) {
-      return NextResponse.json(
-        { error: creditCheck.message, creditLimit: true, balance: creditCheck.balance, cost: creditCheck.cost, planGate: creditCheck.planGate },
-        { status: 403 }
-      )
-    }
-
-    // 트래킹 중인 키워드별 최신 순위 조회
+    // 트래킹 중인 키워드별 최신 순위 조회 (GET은 크레딧 소모 없음 → 조회는 항상 허용)
     // keyword + blog_url 조합별로 최신 checked_at 레코드를 가져옴
     const { data: trackingData, error } = await supabase
       .from('rank_tracking')

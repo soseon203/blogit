@@ -67,7 +67,11 @@ export async function POST(request: NextRequest) {
 
     configureLemonSqueezy()
 
-    const storeId = process.env.LEMONSQUEEZY_STORE_ID!
+    const storeId = process.env.LEMONSQUEEZY_STORE_ID
+    if (!storeId) {
+      console.error('[Billing Checkout] LEMONSQUEEZY_STORE_ID 환경변수 미설정')
+      return NextResponse.json({ error: '결제 설정 오류입니다. 관리자에게 문의하세요.' }, { status: 500 })
+    }
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.blogit.kr'
 
     const { data: checkout, error } = await createCheckout(storeId, variantId, {

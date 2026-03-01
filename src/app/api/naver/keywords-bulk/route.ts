@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
         const errorMessage = error instanceof Error ? error.message : String(error)
         console.error('[Bulk Keywords API] 오류:', errorMessage)
         return NextResponse.json(
-            { error: `대량 키워드 조회 중 오류가 발생했습니다: ${errorMessage}` },
+            { error: '대량 키워드 조회 중 오류가 발생했습니다.' },
             { status: 500 }
         )
     }
