@@ -1,53 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Logo } from '@/components/layout/logo'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { PLANS, type Plan } from '@/types/database'
-import type { UserRole } from '@/types/database'
+import { PLANS } from '@/types/database'
 import { navGroups, adminNavItems, canAccessFeature } from '@/lib/navigation'
 import { Lock, ChevronRight } from 'lucide-react'
-import { isSupabaseConfigured, createClient } from '@/lib/supabase/client'
+import { useUserProfile } from '@/contexts/user-profile'
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [plan, setPlan] = useState<Plan>('free')
-  const [role, setRole] = useState<UserRole>('user')
-  const [creditsBalance, setCreditsBalance] = useState(0)
-  const [creditsQuota, setCreditsQuota] = useState(30)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [userName, setUserName] = useState('')
-  const [userEmail, setUserEmail] = useState('')
-
-  useEffect(() => {
-    async function load() {
-      try {
-        if (isSupabaseConfigured()) {
-          const supabase = createClient()
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            const meta = user.user_metadata
-            setAvatarUrl(meta?.avatar_url || meta?.picture || null)
-            setUserName(meta?.full_name || meta?.name || '')
-            setUserEmail(user.email || '')
-          }
-        }
-        const res = await fetch('/api/dashboard')
-        if (!res.ok) return
-        const data = await res.json()
-        const userRole = (data.profile?.role || 'user') as UserRole
-        setPlan(userRole === 'admin' ? 'admin' : (data.profile?.plan || 'free') as Plan)
-        setRole(userRole)
-        setCreditsBalance(data.profile?.credits_balance ?? 0)
-        setCreditsQuota(data.profile?.credits_monthly_quota ?? 30)
-      } catch {}
-    }
-    load()
-  }, [pathname])
+  const {
+    plan, role, creditsBalance, creditsQuota,
+    avatarUrl, userName, userEmail, loaded,
+  } = useUserProfile()
 
   const planInfo = PLANS[plan]
   const creditPercent = creditsQuota > 0 ? Math.min(100, (creditsBalance / creditsQuota) * 100) : 0
@@ -165,6 +134,24 @@ export function Sidebar() {
 
         {/* 하단 프로필 + 크레딧 */}
         <div className="p-4" style={{ borderTop: '1px solid hsl(230 25% 22%)' }}>
+          {/* 로딩 중 스켈레톤 */}
+          {!loaded ? (
+            <div className="space-y-3 animate-pulse">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-full" style={{ background: 'hsl(230 30% 25%)' }} />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-20 rounded" style={{ background: 'hsl(230 30% 25%)' }} />
+                  <div className="h-2.5 w-32 rounded" style={{ background: 'hsl(230 30% 25%)' }} />
+                </div>
+              </div>
+              <div className="rounded-lg p-3 space-y-2" style={{ background: 'hsl(230 30% 18%)' }}>
+                <div className="h-2.5 w-12 rounded" style={{ background: 'hsl(230 30% 25%)' }} />
+                <div className="h-3.5 w-16 rounded" style={{ background: 'hsl(230 30% 25%)' }} />
+                <div className="h-1.5 w-full rounded-full" style={{ background: 'hsl(230 25% 25%)' }} />
+              </div>
+            </div>
+          ) : (
+          <>
           {(avatarUrl || userEmail) && (
             <div className="mb-3 flex items-center gap-2.5">
               <Avatar className="h-8 w-8 ring-2 ring-white/10">
@@ -208,6 +195,8 @@ export function Sidebar() {
               </div>
             </div>
           </div>
+          </>
+          )}
         </div>
       </div>
     </aside>

@@ -1,48 +1,50 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 /**
- * Supabase DB 기반 키워드 검색 히스토리 훅
- * @param type - 히스토리 타입 ('keyword-research' | 'keyword-discovery')
+ * Supabase DB 기반 키워드 검색 히스토리 훅 (React Query)
+ * @param type - 히스토리 타입 ('keyword-research-history' | 'keyword-discovery-history')
  */
 export function useKeywordHistory(type: string) {
-  const [history, setHistory] = useState<string[]>([])
+  const queryClient = useQueryClient()
 
-  // 마운트 시 DB에서 읽기
-  useEffect(() => {
-    fetch(`/api/search-history?type=${encodeURIComponent(type)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.history?.length) {
-          setHistory(data.history)
-        }
+  const { data: history = [] } = useQuery<string[]>({
+    queryKey: ['search-history', type],
+    queryFn: async () => {
+      const res = await fetch(`/api/search-history?type=${encodeURIComponent(type)}`)
+      const data = await res.json()
+      return data.history?.length ? data.history : []
+    },
+  })
+
+  const { mutate: addKeyword } = useMutation({
+    mutationFn: async (keyword: string) => {
+      const trimmed = keyword.trim()
+      if (!trimmed) return
+      await fetch('/api/search-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: trimmed, type }),
       })
-      .catch(() => {
-        // 조회 실패 무시
-      })
-  }, [type])
-
-  // 히스토리에 키워드 추가 (낙관적 업데이트 + DB 저장)
-  const addKeyword = useCallback((keyword: string) => {
-    const trimmed = keyword.trim()
-    if (!trimmed) return
-
-    // 낙관적 UI 업데이트 (즉시 반영)
-    setHistory((prev) => {
-      const filtered = prev.filter((k) => k !== trimmed)
-      return [trimmed, ...filtered].slice(0, 5)
-    })
-
-    // DB에 비동기 저장 (실패해도 UI는 이미 업데이트됨)
-    fetch('/api/search-history', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword: trimmed, type }),
-    }).catch(() => {
-      // 저장 실패 무시
-    })
-  }, [type])
+    },
+    // 낙관적 업데이트: DB 저장 전에 UI 즉시 반영
+    onMutate: async (keyword: string) => {
+      const trimmed = keyword.trim()
+      if (!trimmed) return
+      await queryClient.cancelQueries({ queryKey: ['search-history', type] })
+      const prev = queryClient.getQueryData<string[]>(['search-history', type]) ?? []
+      const next = [trimmed, ...prev.filter((k) => k !== trimmed)].slice(0, 5)
+      queryClient.setQueryData(['search-history', type], next)
+      return { prev }
+    },
+    // 에러 시 롤백
+    onError: (_err, _keyword, context) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['search-history', type], context.prev)
+      }
+    },
+  })
 
   return { history, addKeyword }
 }

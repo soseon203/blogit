@@ -57,6 +57,9 @@ description: 대시보드 및 인증 페이지의 클라이언트 선언, 한국
 | `src/app/(dashboard)/admin/system/page.tsx` | 관리자 시스템 설정 페이지 |
 | `src/app/(dashboard)/admin/features/page.tsx` | 관리자 기능 관리 페이지 |
 | `src/app/(dashboard)/learning/page.tsx` | 블로그 학습 데이터 페이지 |
+| `src/contexts/user-profile.tsx` | UserProfileContext (전역 사용자 프로필/크레딧/플랜 상태 관리) |
+| `src/app/(dashboard)/layout.tsx` | 대시보드 레이아웃 (UserProfileProvider 래핑) |
+| `src/components/layout/header.tsx` | 헤더 컴포넌트 (useUserProfile 사용) |
 | `src/components/ui/inline-markdown.tsx` | 인라인 마크다운 렌더링 공유 컴포넌트 (AI 텍스트용) |
 | `src/components/content/TiptapEditor.tsx` | TipTap 리치텍스트 에디터 래퍼 (마크다운 입출력) |
 | `src/components/content/TiptapToolbar.tsx` | TipTap 서식 툴바 (13종 네이버 블로그 호환 서식) |
@@ -293,6 +296,31 @@ Grep pattern="toggleBold|toggleItalic|toggleUnderline|setColor|toggleHighlight|s
 **FAIL:** textarea로 편집 또는 HTML 클립보드 미구현
 **수정:** TiptapEditor 컴포넌트 도입, ClipboardItem으로 text/html 복사, markdownToHtml/htmlToMarkdown 변환 연결
 
+### Step 12: UserProfileContext 일관성 검증
+
+**파일:** `src/contexts/user-profile.tsx`, `src/app/(dashboard)/layout.tsx`, `src/components/layout/header.tsx`, `src/components/layout/sidebar.tsx`, `src/components/layout/mobile-sidebar.tsx`
+
+**검사:** 대시보드 레이아웃이 UserProfileProvider로 래핑되어 있고, 레이아웃 컴포넌트(Header, Sidebar, MobileSidebar)가 개별 `/api/dashboard` fetch 대신 `useUserProfile()` 훅을 사용하는지 확인합니다.
+
+```bash
+# 1. layout.tsx에 UserProfileProvider 래핑 확인
+Grep pattern="UserProfileProvider" path="src/app/(dashboard)/layout.tsx" output_mode="content"
+
+# 2. 레이아웃 컴포넌트가 useUserProfile을 사용하는지 확인
+Grep pattern="useUserProfile" path="src/components/layout/header.tsx" output_mode="content"
+Grep pattern="useUserProfile" path="src/components/layout/sidebar.tsx" output_mode="content"
+Grep pattern="useUserProfile" path="src/components/layout/mobile-sidebar.tsx" output_mode="content"
+
+# 3. 레이아웃 컴포넌트에서 개별 /api/dashboard fetch가 없는지 확인 (중복 호출 방지)
+Grep pattern="fetch\('/api/dashboard'\)" path="src/components/layout/header.tsx" output_mode="content"
+Grep pattern="fetch\('/api/dashboard'\)" path="src/components/layout/sidebar.tsx" output_mode="content"
+Grep pattern="fetch\('/api/dashboard'\)" path="src/components/layout/mobile-sidebar.tsx" output_mode="content"
+```
+
+**PASS:** layout.tsx에 UserProfileProvider 존재 + 3개 레이아웃 컴포넌트가 useUserProfile() 사용 + 개별 fetch 없음
+**FAIL:** 레이아웃 컴포넌트가 개별적으로 `/api/dashboard`를 fetch하여 동일 API를 3중 호출
+**수정:** `useUserProfile()` 훅을 import하여 Context에서 데이터를 가져오도록 변경. 개별 useState + useEffect + fetch 패턴 제거
+
 ## Output Format
 
 ```markdown
@@ -311,6 +339,7 @@ Grep pattern="toggleBold|toggleItalic|toggleUnderline|setColor|toggleHighlight|s
 | 9 | 맞춤형 가이드 | PASS/FAIL | blog-index/page.tsx | blog-index 전용: 약한 카테고리 분석 기반 가이드 |
 | 10 | AI 텍스트 마크다운 | PASS/FAIL | 파일명 | AI 생성 텍스트 마크다운 렌더링 |
 | 11 | TipTap 에디터 | PASS/FAIL | content/page.tsx | TipTap WYSIWYG + HTML 복사 + 서식 툴바 |
+| 12 | UserProfileContext | PASS/FAIL | layout.tsx, header.tsx, sidebar.tsx, mobile-sidebar.tsx | Context 기반 1회 API 호출 + 개별 fetch 없음 |
 ```
 
 ## Exceptions
